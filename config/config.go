@@ -12,6 +12,8 @@ import (
 type (
 	// Config represents the main app's configuration.
 	Config struct {
+		Host string `yaml:"host"`
+		HTTP HTTP   `yaml:"http"`
 	}
 )
 
@@ -52,4 +54,6 @@ func (c *Config) Load() error {
 }
 
 func (c *Config) setDefault() {
+	c.Host = "127.0.0.1"
+	c.HTTP.Port = 8080
 }
