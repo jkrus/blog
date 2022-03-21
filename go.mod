@@ -4,6 +4,7 @@ go 1.17
 
 require (
 	github.com/cpuguy83/go-md2man/v2 v2.0.1 // indirect
+	github.com/go-chi/chi/v5 v5.0.7 // indirect
 	github.com/goava/di v1.11.1 // indirect
 	github.com/jkrus/kit v0.0.6 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
