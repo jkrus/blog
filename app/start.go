@@ -13,6 +13,7 @@ import (
 	"blog/api/router"
 	"blog/api/server"
 	"blog/config"
+	"blog/datastore"
 	api "blog/errors"
 )
 
@@ -46,6 +47,12 @@ func startCommand(ctx context.Context, cfg *config.Config, dic *di.Container, ap
 // invokeServices tries to invoke required
 // services from application DI container.
 func invokeServices(dic *di.Container) error {
+	// invoke database connection starter
+	if err := dic.Invoke(datastore.Start); err != nil {
+		if !errors.Is(err, http.ErrServerClosed) {
+			return api.ErrOpenDatabase(err)
+		}
+	}
 	// invoke api router starter
 	if err := dic.Invoke(router.StartAPI); err != nil {
 		if !errors.As(err, &http.ErrServerClosed) {

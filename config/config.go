@@ -14,6 +14,7 @@ type (
 	Config struct {
 		Host string `yaml:"host"`
 		HTTP HTTP   `yaml:"http"`
+		DB   DB     `yaml:"DB"`
 	}
 )
 
@@ -55,5 +56,13 @@ func (c *Config) Load() error {
 
 func (c *Config) setDefault() {
 	c.Host = "127.0.0.1"
+
 	c.HTTP.Port = 8080
+
+	c.DB.User = "root"
+	c.DB.Pass = "secret"
+	c.DB.Host = "localhost"
+	c.DB.Port = 3306
+	c.DB.Name = "blogbd"
+	c.DB.Code = "utf8"
 }
