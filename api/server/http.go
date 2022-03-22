@@ -6,6 +6,7 @@ import (
 	"net"
 	"net/http"
 	"strconv"
+	"sync"
 
 	"github.com/go-chi/chi/v5"
 
@@ -23,6 +24,7 @@ type (
 	// httpService implemented HTTP interface.
 	httpService struct {
 		ctx      context.Context
+		wg       *sync.WaitGroup
 		listener net.Listener
 		server   *http.Server
 	}
@@ -46,6 +48,7 @@ func NewHTTP(ctx context.Context, cfg *config.Config, r chi.Router) HTTP {
 
 	return &httpService{
 		ctx:      ctx,
+		wg:       &sync.WaitGroup{},
 		listener: listener,
 		server:   server,
 	}
@@ -54,7 +57,8 @@ func NewHTTP(ctx context.Context, cfg *config.Config, r chi.Router) HTTP {
 // Start implements HTTP interface.
 func (h *httpService) Start() error {
 	log.Println("Start HTTP server...")
-	h.createContextHandler()
+	h.wg.Add(1)
+	go h.createContextHandler()
 
 	log.Println("HTTP server listen on:", h.server.Addr, "and serve...")
 
@@ -63,6 +67,7 @@ func (h *httpService) Start() error {
 
 // Stop implements HTTP interface.
 func (h *httpService) Stop() error {
+	defer h.wg.Done()
 	log.Println("Stop HTTP Server...")
 	if err := h.server.Shutdown(context.Background()); err != nil {
 		return err
@@ -79,8 +84,8 @@ func (h *httpService) Stop() error {
 
 // createContextHandler creates a context handler goroutine.
 func (h *httpService) createContextHandler() {
-	go func() {
+	for {
 		<-h.ctx.Done()
 		_ = h.Stop()
-	}()
+	}
 }
