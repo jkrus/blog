@@ -32,6 +32,7 @@ func addNote(dic *di.Container, w http.ResponseWriter, r *http.Request) {
 	var note service.Note
 	if err := dic.Resolve(&note); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(err.Error()))
 	}
 	n := &models.NoteDTO{}
 	v, err := request.ParseHTTPRequest(n, r)
