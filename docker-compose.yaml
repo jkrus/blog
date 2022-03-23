@@ -1,0 +1,22 @@
+version: '3'
+services:
+  db:
+      image: mysql
+      command: --default-authentication-plugin=mysql_native_password
+      restart: always
+      environment:
+        MYSQL_ROOT_PASSWORD: secret
+
+  blog:
+    depends_on:
+      - db
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: go run main.go start
+    container_name: app
+    volumes:
+      - /home/user/.config:/root/.config
+    ports:
+      - "8080:8080"
+      - "8081:8081"
