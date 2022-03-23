@@ -3,6 +3,7 @@ package datastore
 import (
 	"context"
 	"log"
+	"sync"
 
 	"github.com/goava/di"
 	"github.com/pkg/errors"
@@ -21,8 +22,11 @@ func Start(ctx context.Context, cfg *config.Config, dic *di.Container) error {
 	if err := dic.Provide(func() *gorm.DB { return orm }); err != nil {
 		return errors.Wrap(err, "provide orm filed")
 	}
-
-	go createContextHandler(ctx, orm)
+	var wg *sync.WaitGroup
+	if err := dic.Resolve(&wg); err != nil {
+		return errors.Wrap(err, "resolve application wait group filed")
+	}
+	createContextHandler(ctx, orm, wg)
 	autoMigrate(orm)
 
 	log.Println("Connect to database success.")
@@ -42,17 +46,22 @@ func Close(orm *gorm.DB) error {
 	return nil
 }
 
-func createContextHandler(ctx context.Context, db *gorm.DB) {
+func createContextHandler(ctx context.Context, db *gorm.DB, wg *sync.WaitGroup) {
 	cc, cancel := context.WithCancel(ctx)
-	for {
-		<-cc.Done()
-		log.Println("Stop database service...")
-		if err := Close(db); err != nil {
-			log.Println("Close database connection: ", err)
-		} else {
-			log.Println("Database Service stopped.")
+	wg.Add(1)
+	go func() {
+		for {
+			<-cc.Done()
+			log.Println("Stop database service...")
+			if err := Close(db); err != nil {
+				log.Println("Close database connection: ", err)
+			} else {
+				log.Println("Database Service stopped.")
+			}
+			cancel()
+			wg.Done()
+			return
 		}
-		cancel()
-		return
-	}
+	}()
+
 }
