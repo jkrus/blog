@@ -65,10 +65,17 @@ func invokeServices(dic *di.Container) error {
 		return api.ErrStartNoteService(err)
 	}
 
+	// invoke grpc server starter
+	if err := dic.Invoke(server.GRPC.Start); err != nil {
+		if !errors.As(err, &http.ErrServerClosed) {
+			return api.ErrStartHTTPServer(err)
+		}
+	}
+
 	// invoke api router starter
 	if err := dic.Invoke(router.StartAPI); err != nil {
 		if !errors.As(err, &http.ErrServerClosed) {
-			return api.ErrStartHTTPServer(err)
+			return api.ErrStartGRPCPServer(err)
 		}
 	}
 
@@ -87,6 +94,11 @@ func provideServices(dic *di.Container) error {
 	// provide HTTP server interface.
 	if err := dic.Provide(server.NewHTTP); err != nil {
 		return api.ErrProvideHTTPServer(err)
+	}
+
+	// provide GRPC server interface.
+	if err := dic.Provide(server.NewGRPC); err != nil {
+		return api.ErrProvideGRPCServer(err)
 	}
 
 	// provide User Service.
