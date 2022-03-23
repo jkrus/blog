@@ -11,6 +11,7 @@ import (
 	"github.com/pkg/errors"
 	"google.golang.org/grpc"
 
+	handlers "blog/api/handlers/grpc"
 	"blog/config"
 	"blog/service"
 )
@@ -22,7 +23,7 @@ type (
 		service.Service
 	}
 
-	// grpcService implemented HTTP interface.
+	// grpcService implemented GRPC interface.
 	grpcService struct {
 		ctx      context.Context
 		dic      *di.Container
@@ -34,13 +35,13 @@ type (
 
 func NewGRPC(ctx context.Context, cfg *config.Config, dic *di.Container) GRPC {
 	if cfg.GRPC.Port <= 0 || cfg.Host == "" {
-		log.Fatal("Can't create HTTP Server: config is not specified")
+		log.Fatal("Can't create GRPC Server: config is not specified")
 	}
 
 	addr := cfg.Host + ":" + strconv.Itoa(cfg.GRPC.Port)
 	listener, err := net.Listen("tcp", addr)
 	if err != nil {
-		log.Fatalf("Can't create HTTP Server: can't create listener")
+		log.Fatalf("Can't create GRPC Server: can't create listener")
 	}
 
 	return &grpcService{
@@ -59,6 +60,8 @@ func (h *grpcService) Start() error {
 		return errors.Wrap(err, "resolve application wait group filed")
 	}
 	h.createContextHandler()
+
+	handlers.RegisterNoteHandlers(h.dic, h.server)
 
 	go func() {
 		_ = h.server.Serve(h.listener)

@@ -1,0 +1,12 @@
+syntax = "proto3";
+
+package blog.proto;
+
+option go_package = "blog/models/grpc/proto";
+
+import "grpc/note.proto";
+
+service NoteService {
+  rpc AddNote(NoteDTO) returns (EmptyResponse);
+  rpc GetNotes(EmptyRequest) returns (Notes);
+}
