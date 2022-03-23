@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 	"net/http"
+	"sync"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/goava/di"
@@ -15,6 +16,7 @@ import (
 	"blog/config"
 	"blog/datastore"
 	api "blog/errors"
+	"blog/service"
 )
 
 func startCommand(ctx context.Context, cfg *config.Config, dic *di.Container, app *cli.App) {
@@ -34,9 +36,13 @@ func startCommand(ctx context.Context, cfg *config.Config, dic *di.Container, ap
 		},
 		After: func(c *cli.Context) error {
 			<-c.Done()
+			var wg *sync.WaitGroup
+			if err := dic.Resolve(&wg); err != nil {
+				return errors.Wrap(err, "resolve application wait group filed")
+			}
 
 			ctx.Done()
-
+			wg.Wait()
 			log.Println("Application shutdown complete.")
 
 			return nil
@@ -53,6 +59,12 @@ func invokeServices(dic *di.Container) error {
 			return api.ErrOpenDatabase(err)
 		}
 	}
+
+	// invoke models service starter.
+	if err := dic.Invoke(service.Note.Start); err != nil {
+		return api.ErrStartNoteService(err)
+	}
+
 	// invoke api router starter
 	if err := dic.Invoke(router.StartAPI); err != nil {
 		if !errors.As(err, &http.ErrServerClosed) {
@@ -75,6 +87,11 @@ func provideServices(dic *di.Container) error {
 	// provide HTTP server interface.
 	if err := dic.Provide(server.NewHTTP); err != nil {
 		return api.ErrProvideHTTPServer(err)
+	}
+
+	// provide User Service.
+	if err := dic.Provide(service.NewNoteService); err != nil {
+		return api.ErrProvideUserService(err)
 	}
 
 	return nil

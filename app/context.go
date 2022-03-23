@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"sync"
 	"syscall"
 )
 
@@ -14,6 +15,11 @@ func NewContext() context.Context {
 	go handleOsSig(cancel)
 
 	return ctx
+}
+
+// NewWaitGroup construct wait group of the application.
+func NewWaitGroup() *sync.WaitGroup {
+	return &sync.WaitGroup{}
 }
 
 func handleOsSig(cancel context.CancelFunc) {

@@ -3,11 +3,13 @@ package errors
 import "github.com/pkg/errors"
 
 const (
-	errLoadConfigMsg        = "load config"
-	errProvideHTTPServerMsg = "provide http server"
-	errOpenDatabaseMsg      = "open database"
-	errProvideRouterMsg     = "provide router"
-	errStartHTTPServerMsg   = "start http Server"
+	errLoadConfigMsg         = "load config"
+	errProvideHTTPServerMsg  = "provide http server"
+	errProvideNoteServiceMsg = "provide models service"
+	errOpenDatabaseMsg       = "open database"
+	errProvideRouterMsg      = "provide router"
+	errStartHTTPServerMsg    = "start http Server"
+	errStartNoteServiceMsg   = "start models service"
 )
 
 func ErrLoadConfig(w error) error {
@@ -28,4 +30,12 @@ func ErrProvideHTTPServer(w error) error {
 
 func ErrStartHTTPServer(w error) error {
 	return errors.Wrap(w, errStartHTTPServerMsg)
+}
+
+func ErrStartNoteService(w error) error {
+	return errors.Wrap(w, errStartNoteServiceMsg)
+}
+
+func ErrProvideUserService(w error) error {
+	return errors.Wrap(w, errProvideNoteServiceMsg)
 }

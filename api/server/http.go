@@ -9,6 +9,8 @@ import (
 	"sync"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/goava/di"
+	"github.com/pkg/errors"
 
 	"blog/config"
 	"blog/service"
@@ -24,13 +26,14 @@ type (
 	// httpService implemented HTTP interface.
 	httpService struct {
 		ctx      context.Context
+		dic      *di.Container
 		wg       *sync.WaitGroup
 		listener net.Listener
 		server   *http.Server
 	}
 )
 
-func NewHTTP(ctx context.Context, cfg *config.Config, r chi.Router) HTTP {
+func NewHTTP(ctx context.Context, cfg *config.Config, r chi.Router, dic *di.Container) HTTP {
 	if cfg.HTTP.Port <= 0 || cfg.Host == "" {
 		log.Fatal("Can't create HTTP Server: config is not specified")
 	}
@@ -48,6 +51,7 @@ func NewHTTP(ctx context.Context, cfg *config.Config, r chi.Router) HTTP {
 
 	return &httpService{
 		ctx:      ctx,
+		dic:      dic,
 		wg:       &sync.WaitGroup{},
 		listener: listener,
 		server:   server,
@@ -57,8 +61,10 @@ func NewHTTP(ctx context.Context, cfg *config.Config, r chi.Router) HTTP {
 // Start implements HTTP interface.
 func (h *httpService) Start() error {
 	log.Println("Start HTTP server...")
-	h.wg.Add(1)
-	go h.createContextHandler()
+	if err := h.dic.Resolve(&h.wg); err != nil {
+		return errors.Wrap(err, "resolve application wait group filed")
+	}
+	h.createContextHandler()
 
 	log.Println("HTTP server listen on:", h.server.Addr, "and serve...")
 
@@ -67,13 +73,12 @@ func (h *httpService) Start() error {
 
 // Stop implements HTTP interface.
 func (h *httpService) Stop() error {
-	defer h.wg.Done()
 	log.Println("Stop HTTP Server...")
 	if err := h.server.Shutdown(context.Background()); err != nil {
 		return err
 	}
 
-	log.Println("HTTP Server stop complete.")
+	log.Println("HTTP Server stopped.")
 
 	if h.listener != nil {
 		return h.listener.Close()
@@ -84,8 +89,14 @@ func (h *httpService) Stop() error {
 
 // createContextHandler creates a context handler goroutine.
 func (h *httpService) createContextHandler() {
-	for {
-		<-h.ctx.Done()
-		_ = h.Stop()
-	}
+	h.wg.Add(1)
+	go func() {
+		for {
+			<-h.ctx.Done()
+			_ = h.Stop()
+			h.wg.Done()
+			return
+		}
+	}()
+
 }

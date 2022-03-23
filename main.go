@@ -15,6 +15,8 @@ func main() {
 		di.Provide(app.NewApp),
 		// provide the application's context.
 		di.Provide(app.NewContext),
+		// provide the application's wait group.
+		di.Provide(app.NewWaitGroup),
 		// provide the application config.
 		di.Provide(config.NewConfig),
 	)
