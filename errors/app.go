@@ -5,10 +5,12 @@ import "github.com/pkg/errors"
 const (
 	errLoadConfigMsg         = "load config"
 	errProvideHTTPServerMsg  = "provide http server"
+	errProvideGRPCServerMsg  = "provide grpc server"
 	errProvideNoteServiceMsg = "provide models service"
 	errOpenDatabaseMsg       = "open database"
 	errProvideRouterMsg      = "provide router"
 	errStartHTTPServerMsg    = "start http Server"
+	errStartGRPCServerMsg    = "start grpc Server"
 	errStartNoteServiceMsg   = "start models service"
 )
 
@@ -28,8 +30,16 @@ func ErrProvideHTTPServer(w error) error {
 	return errors.Wrap(w, errProvideHTTPServerMsg)
 }
 
+func ErrProvideGRPCServer(w error) error {
+	return errors.Wrap(w, errProvideGRPCServerMsg)
+}
+
 func ErrStartHTTPServer(w error) error {
 	return errors.Wrap(w, errStartHTTPServerMsg)
+}
+
+func ErrStartGRPCPServer(w error) error {
+	return errors.Wrap(w, errStartGRPCServerMsg)
 }
 
 func ErrStartNoteService(w error) error {
